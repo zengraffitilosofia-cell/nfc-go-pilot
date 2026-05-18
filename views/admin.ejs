@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NFC GO · Admin<% if (page === 'business' && business) { %> · <%= business.name %><% } %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="admin-body">
+
+  <header class="admin-header">
+    <a href="/admin" class="brand">NFC GO</a>
+    <nav class="admin-nav">
+      <a href="/admin" class="nav-link<% if (page==='dashboard') { %> nav-link--active<% } %>">Negocios</a>
+      <a href="/admin/logout" class="nav-link nav-link--logout">Salir</a>
+    </nav>
+  </header>
+
+  <div class="admin-content">
+
+    <!-- ── Flash toast ──────────────────────────────────────────────────────── -->
+    <div id="admin-toast-anchor"></div>
+    <% if (flash) { %>
+      <div id="admin-toast" class="toast toast--<%= flash.type %>">
+        <%= flash.type === 'success' ? '✓' : '✕' %> <%= flash.msg %>
+      </div>
+    <% } %>
+
+  <% if (page === 'dashboard') { %>
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       DASHBOARD
+  ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Stats globales -->
+    <section class="stats-row">
+      <div class="stat-card">
+        <span class="stat-value"><%= stats.total %></span>
+        <span class="stat-label">Total etiquetas</span>
+      </div>
+      <div class="stat-card stat-card--active">
+        <span class="stat-value"><%= stats.active %></span>
+        <span class="stat-label">Disponibles</span>
+      </div>
+      <div class="stat-card stat-card--claimed">
+        <span class="stat-value"><%= stats.claimed %></span>
+        <span class="stat-label">Reclamadas</span>
+      </div>
+      <div class="stat-card stat-card--disabled">
+        <span class="stat-value"><%= stats.disabled %></span>
+        <span class="stat-label">Desactivadas</span>
+      </div>
+    </section>
+
+    <!-- Formulario nuevo negocio -->
+    <section class="panel">
+      <h2 class="panel-title">Nuevo negocio</h2>
+      <form method="POST" action="/admin/businesses" class="form-grid">
+        <div class="form-group">
+          <label for="name">Nombre del negocio</label>
+          <input type="text" id="name" name="name" placeholder="La Toscana" required>
+        </div>
+        <div class="form-group">
+          <label for="slug">Slug (identificador único)</label>
+          <input type="text" id="slug" name="slug" placeholder="la-toscana" required>
+          <small>Solo letras, números y guiones. Se usará como prefijo.</small>
+        </div>
+        <div class="form-group">
+          <label for="logo_url">URL del logo (opcional)</label>
+          <input type="url" id="logo_url" name="logo_url" placeholder="https://...">
+        </div>
+        <div class="form-group form-group--full">
+          <label for="reward_text">Texto de recompensa</label>
+          <input type="text" id="reward_text" name="reward_text"
+                 placeholder="10% de descuento en tu próxima visita" required>
+        </div>
+        <div class="form-group form-group--full">
+          <button type="submit" class="btn btn--primary">Crear negocio</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Lista de negocios -->
+    <section class="panel">
+      <h2 class="panel-title">Negocios registrados</h2>
+      <% if (businesses.length === 0) { %>
+        <p class="empty-state">Aún no hay negocios. Crea el primero arriba.</p>
+      <% } else { %>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Slug</th>
+              <th>Etiquetas</th>
+              <th>Recompensa</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% businesses.forEach(b => { %>
+            <tr>
+              <td><%= b.name %></td>
+              <td><code class="code-chip"><%= b.slug %></code></td>
+              <td>
+                <span class="tag-count">
+                  <%= b.tag_count || 0 %>
+                  <% if (b.claimed_count > 0) { %>
+                    <span class="tag-count-claimed">(<%=b.claimed_count%> ✓)</span>
+                  <% } %>
+                </span>
+              </td>
+              <td class="td-reward"><%= b.reward_text %></td>
+              <td>
+                <span class="badge <%= b.active ? 'badge--active' : 'badge--disabled' %>">
+                  <%= b.active ? 'Activo' : 'Inactivo' %>
+                </span>
+              </td>
+              <td class="td-actions">
+                <a href="/admin/businesses/<%= b.id %>" class="btn btn--sm">Ver etiquetas</a>
+                <button
+                  class="btn btn--sm btn--danger"
+                  data-business-id="<%= b.id %>"
+                  data-business-name="<%= b.name %>"
+                  onclick="deleteBusiness(this)">
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% } %>
+    </section>
+
+  <% } else if (page === 'business') { %>
+  <!-- ═══════════════════════════════════════════════════════════════════════════
+       DETALLE DE NEGOCIO
+  ══════════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Data slot para JS (sin variables globales expuestas en markup) -->
+    <span id="js-data"
+          data-business-id="<%= business.id %>"
+          data-base-url="<%= baseUrl %>"
+          class="hidden"></span>
+
+    <div class="page-header">
+      <a href="/admin" class="back-link">← Volver</a>
+      <h1 class="page-title"><%= business.name %></h1>
+      <span class="badge <%= business.active ? 'badge--active' : 'badge--disabled' %>">
+        <%= business.active ? 'Activo' : 'Inactivo' %>
+      </span>
+      <div class="page-header-actions">
+        <a href="/admin/businesses/<%= business.id %>/export.csv"
+           class="btn btn--sm">⬇ Exportar CSV</a>
+        <form method="POST"
+              action="/admin/businesses/<%= business.id %>/reset-all"
+              onsubmit="return confirm('¿Resetear TODAS las etiquetas de este negocio a \"disponible\"?\n\nEsto borrará las fechas de reclamación.')">
+          <button type="submit" class="btn btn--sm btn--warn">↺ Resetear todas</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Stats del negocio -->
+    <section class="stats-row">
+      <div class="stat-card">
+        <span class="stat-value"><%= stats.total %></span>
+        <span class="stat-label">Total etiquetas</span>
+      </div>
+      <div class="stat-card stat-card--active">
+        <span class="stat-value"><%= stats.active %></span>
+        <span class="stat-label">Disponibles</span>
+      </div>
+      <div class="stat-card stat-card--claimed">
+        <span class="stat-value"><%= stats.claimed %></span>
+        <span class="stat-label">Reclamadas</span>
+      </div>
+      <div class="stat-card stat-card--disabled">
+        <span class="stat-value"><%= stats.disabled %></span>
+        <span class="stat-label">Desactivadas</span>
+      </div>
+    </section>
+
+    <div class="two-col">
+
+      <!-- Editar negocio -->
+      <section class="panel">
+        <h2 class="panel-title">Editar negocio</h2>
+        <form method="POST" action="/admin/businesses/<%= business.id %>/edit" class="form-stack">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" name="name" value="<%= business.name %>" required>
+          </div>
+          <div class="form-group">
+            <label>URL del logo</label>
+            <input type="url" name="logo_url" value="<%= business.logo_url || '' %>">
+          </div>
+          <div class="form-group">
+            <label>Texto de recompensa</label>
+            <input type="text" name="reward_text" value="<%= business.reward_text %>" required>
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select name="active">
+              <option value="1" <%= business.active ? 'selected' : '' %>>Activo</option>
+              <option value="0" <%= !business.active ? 'selected' : '' %>>Inactivo</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn--primary">Guardar cambios</button>
+        </form>
+      </section>
+
+      <!-- Generar etiquetas -->
+      <section class="panel">
+        <h2 class="panel-title">Generar etiquetas NFC</h2>
+        <form method="POST" action="/admin/businesses/<%= business.id %>/generate" class="form-stack">
+          <div class="form-group">
+            <label>Prefijo del código (ej. TOSC)</label>
+            <input type="text" name="prefix"
+                   value="<%= business.slug.replace(/-/g,'').toUpperCase().substring(0,6) %>"
+                   maxlength="8" required>
+          </div>
+          <div class="form-group">
+            <label>Cantidad de etiquetas</label>
+            <input type="number" name="count" value="30" min="1" max="200" required>
+          </div>
+          <div class="form-group">
+            <label>Empezar numeración en</label>
+            <input type="number" name="start_at" value="<%= (tags.length + 1) %>" min="1" required>
+          </div>
+          <button type="submit" class="btn btn--primary">Generar etiquetas</button>
+        </form>
+      </section>
+
+    </div>
+
+    <!-- ── Tabla de etiquetas ──────────────────────────────────────────────── -->
+    <section class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Etiquetas NFC (<%= tags.length %>)</h2>
+        <% if (tags.length > 0) { %>
+        <div class="panel-header-tools">
+          <input
+            type="text"
+            id="tag-filter"
+            class="filter-input"
+            placeholder="🔍 Filtrar por código o estado…"
+            autocomplete="off">
+        </div>
+        <% } %>
+      </div>
+
+      <!-- Bulk toolbar (hidden until checkboxes are selected) -->
+      <% if (tags.length > 0) { %>
+      <div id="bulk-toolbar" class="bulk-toolbar">
+        <span class="bulk-info">
+          <strong id="selected-count">0</strong> seleccionada(s)
+        </span>
+        <button id="btn-bulk-reset" class="btn btn--sm btn--warn">↺ Resetear seleccionadas</button>
+        <button id="btn-bulk-delete" class="btn btn--sm btn--danger">🗑 Eliminar seleccionadas</button>
+      </div>
+      <% } %>
+
+      <% if (tags.length === 0) { %>
+        <p class="empty-state">No hay etiquetas generadas aún. Usa el formulario de arriba.</p>
+      <% } else { %>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="th-cb">
+                <input type="checkbox" id="cb-select-all" class="cb" title="Seleccionar todo">
+              </th>
+              <th>Código descuento</th>
+              <th>Estado</th>
+              <th>Reclamado</th>
+              <th>URL NFC</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% tags.forEach(tag => { %>
+            <tr class="tag-row"
+                data-search="<%= `${tag.discount_code} ${tag.tag_code} ${tag.status}`.toLowerCase() %>">
+              <td class="td-cb">
+                <input type="checkbox" class="tag-cb cb" value="<%= tag.id %>">
+              </td>
+              <td>
+                <code class="code-chip code-chip--highlight"><%= tag.discount_code %></code>
+              </td>
+              <td>
+                <% if (tag.status === 'active') { %>
+                  <span class="badge badge--active">Disponible</span>
+                <% } else if (tag.status === 'claimed') { %>
+                  <span class="badge badge--claimed">Reclamada</span>
+                <% } else { %>
+                  <span class="badge badge--disabled">Desactivada</span>
+                <% } %>
+              </td>
+              <td class="td-date">
+                <%= tag.claimed_at ? new Date(tag.claimed_at).toLocaleString('es-ES') : '—' %>
+              </td>
+              <td class="td-url">
+                <div class="url-cell">
+                  <code class="code-chip code-chip--sm code-chip--url"
+                        title="<%= baseUrl %>/c/<%= tag.tag_code %>">
+                    /c/<%= tag.tag_code.substring(0,8) %>…
+                  </code>
+                  <button class="btn btn--xs btn-copy"
+                          data-url="<%= baseUrl %>/c/<%= tag.tag_code %>"
+                          onclick="copyUrl(this)"
+                          title="Copiar URL completa">
+                    Copiar
+                  </button>
+                </div>
+              </td>
+              <td class="td-actions">
+                <% if (tag.status === 'active') { %>
+                  <form method="POST" action="/admin/tags/<%= tag.id %>/disable" style="display:inline">
+                    <button class="btn btn--sm btn--danger">Desactivar</button>
+                  </form>
+                <% } else if (tag.status === 'disabled') { %>
+                  <form method="POST" action="/admin/tags/<%= tag.id %>/enable" style="display:inline">
+                    <button class="btn btn--sm">Activar</button>
+                  </form>
+                <% } else { %>
+                  <!-- claimed -->
+                  <form method="POST" action="/admin/tags/<%= tag.id %>/enable" style="display:inline"
+                        onsubmit="return confirm('¿Resetear esta etiqueta a disponible?')">
+                    <button class="btn btn--sm btn--warn">Resetear</button>
+                  </form>
+                <% } %>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <p id="filter-empty" class="empty-state hidden">
+        Ninguna etiqueta coincide con el filtro.
+      </p>
+      <% } %>
+    </section>
+
+  <% } %>
+  </div><!-- /admin-content -->
+
+  <script src="/admin.js"></script>
+</body>
+</html>

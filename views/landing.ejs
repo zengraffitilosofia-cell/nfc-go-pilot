@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NFC GO<% if (business) { %> · <%= business.name %><% } %></title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="landing">
+
+    <% if (state === 'active') { %>
+    <!-- ── ESTADO: Premio disponible ── -->
+    <div class="card card--landing" id="card-pre">
+      <% if (business.logo_url) { %>
+        <img src="<%= business.logo_url %>" alt="<%= business.name %>" class="business-logo">
+      <% } else { %>
+        <div class="business-name-badge"><%= business.name %></div>
+      <% } %>
+
+      <div class="emoji-big">🎉</div>
+      <h1 class="landing-title">¡Has encontrado un NFC GO!</h1>
+      <p class="landing-subtitle">Tu recompensa:</p>
+      <p class="reward-text"><%= business.reward_text %></p>
+
+      <button class="btn btn--claim" id="btn-claim">Reclamar premio</button>
+      <p class="claim-note" id="claim-note"></p>
+    </div>
+
+    <!-- ── ESTADO: Premio reclamado (se muestra tras el POST) ── -->
+    <div class="card card--landing hidden" id="card-post">
+      <div class="emoji-big">✅</div>
+      <h1 class="landing-title">¡Premio reclamado!</h1>
+      <p class="landing-subtitle">Tu código de descuento:</p>
+      <div class="discount-box" id="discount-code-display"></div>
+      <p class="redeem-note">Preséntalo en el local para canjearlo.</p>
+      <% if (business.logo_url) { %>
+        <img src="<%= business.logo_url %>" alt="<%= business.name %>" class="business-logo business-logo--small">
+      <% } %>
+    </div>
+
+    <% } else { %>
+    <!-- ── ESTADO: Ya reclamado (cargado desde servidor) ── -->
+    <div class="card card--landing">
+      <div class="emoji-big">🔒</div>
+      <h1 class="landing-title">Premio ya reclamado</h1>
+      <p class="landing-subtitle">Este NFC GO ya fue encontrado por alguien antes que tú.</p>
+      <% if (business) { %>
+        <p class="reward-text"><%= business.reward_text %></p>
+        <% if (business.logo_url) { %>
+          <img src="<%= business.logo_url %>" alt="<%= business.name %>" class="business-logo business-logo--small">
+        <% } %>
+      <% } %>
+      <p class="claim-note">¡Sigue buscando, hay más etiquetas por la ciudad!</p>
+    </div>
+    <% } %>
+
+    <footer class="landing-footer">
+      <span class="brand">NFC GO</span>
+      <span class="brand-tagline">La caza del tesoro urbana</span>
+    </footer>
+  </main>
+
+  <% if (state === 'active') { %>
+  <script>
+    const tagCode = '<%= tag.tag_code %>';
+    const btnClaim = document.getElementById('btn-claim');
+    const claimNote = document.getElementById('claim-note');
+    const cardPre  = document.getElementById('card-pre');
+    const cardPost = document.getElementById('card-post');
+    const discountDisplay = document.getElementById('discount-code-display');
+
+    btnClaim.addEventListener('click', async () => {
+      btnClaim.disabled = true;
+      btnClaim.textContent = 'Reclamando…';
+      claimNote.textContent = '';
+
+      try {
+        const res = await fetch('/claim/' + tagCode, { method: 'POST' });
+        const data = await res.json();
+
+        if (!res.ok) {
+          claimNote.textContent = data.error || 'Ocurrió un error. Inténtalo de nuevo.';
+          btnClaim.disabled = false;
+          btnClaim.textContent = 'Reclamar premio';
+          return;
+        }
+
+        discountDisplay.textContent = data.discount_code;
+        cardPre.classList.add('hidden');
+        cardPost.classList.remove('hidden');
+      } catch (e) {
+        claimNote.textContent = 'Error de red. Comprueba tu conexión.';
+        btnClaim.disabled = false;
+        btnClaim.textContent = 'Reclamar premio';
+      }
+    });
+  </script>
+  <% } %>
+</body>
+</html>
