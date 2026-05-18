@@ -1,0 +1,22 @@
+app = "nfc-go-pilot"
+primary_region = "cdg"
+
+[build]
+  builder = "heroku/buildpacks:20"
+
+[env]
+  ADMIN_PASSWORD = "admin123"
+  DATABASE_PATH = "/data/nfcgo.db"
+  PORT = "3000"
+
+[mounts]
+  source = "nfc_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
