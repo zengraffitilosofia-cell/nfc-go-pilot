@@ -139,12 +139,6 @@
        DETALLE DE NEGOCIO
   ══════════════════════════════════════════════════════════════════════════════ -->
 
-    <!-- Data slot para JS (sin variables globales expuestas en markup) -->
-    <span id="js-data"
-          data-business-id="<%= business.id %>"
-          data-base-url="<%= baseUrl %>"
-          class="hidden"></span>
-
     <div class="page-header">
       <a href="/admin" class="back-link">← Volver</a>
       <h1 class="page-title"><%= business.name %></h1>
@@ -303,12 +297,13 @@
               </td>
               <td class="td-url">
                 <div class="url-cell">
-                  <code class="code-chip code-chip--sm code-chip--url"
-                        title="<%= baseUrl %>/c/<%= tag.tag_code %>">
+                  <code class="code-chip code-chip--sm code-chip--url nfc-url-code"
+                        data-tag="<%= tag.tag_code %>"
+                        title="Cargando URL…">
                     /c/<%= tag.tag_code.substring(0,8) %>…
                   </code>
                   <button class="btn btn--xs btn-copy"
-                          data-url="<%= baseUrl %>/c/<%= tag.tag_code %>"
+                          data-tag="<%= tag.tag_code %>"
                           onclick="copyUrl(this)"
                           title="Copiar URL completa">
                     Copiar
@@ -347,5 +342,50 @@
   </div><!-- /admin-content -->
 
   <script src="/admin.js"></script>
+  <script>
+    // ──────────────────────────────────────────────────────────────────────
+    // Corrige las URLs NFC a absolutas usando el origen real de la página
+    // (funciona en localhost, Render, Fly.io, etc. sin depender de baseUrl)
+    // ──────────────────────────────────────────────────────────────────────
+    (function fixNfcUrls() {
+      const base = window.location.origin;  // ej: https://nfc-go-pilot.onrender.com
+      document.querySelectorAll('.nfc-url-code').forEach(code => {
+        const tag = code.dataset.tag;
+        const full = base + '/c/' + tag;
+        code.textContent = full;
+        code.title = full;
+      });
+      document.querySelectorAll('.btn-copy[data-tag]').forEach(btn => {
+        const tag = btn.dataset.tag;
+        btn.dataset.url = base + '/c/' + tag;
+      });
+    })();
+
+    // ──────────────────────────────────────────────────────────────────────
+    // Función copyUrl (por si admin.js no la define o para sobrescribir)
+    // ──────────────────────────────────────────────────────────────────────
+    function copyUrl(el) {
+      const url = el.dataset.url;
+      if (!url) return;
+      navigator.clipboard.writeText(url).then(() => {
+        const originalText = el.textContent;
+        el.textContent = '¡Copiado!';
+        el.classList.add('btn-copied');
+        setTimeout(() => {
+          el.textContent = originalText;
+          el.classList.remove('btn-copied');
+        }, 1500);
+      }).catch(() => {
+        // Fallback para navegadores antiguos
+        const input = document.createElement('input');
+        input.value = url;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+        alert('URL copiada: ' + url);
+      });
+    }
+  </script>
 </body>
 </html>
