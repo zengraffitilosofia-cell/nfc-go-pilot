@@ -12,6 +12,14 @@
     <% if (state === 'active') { %>
     <!-- ── ESTADO: Premio disponible ── -->
     <div class="card card--landing" id="card-pre">
+
+      <!-- Logo NFC Universe siempre visible arriba -->
+      <img
+        src="https://nfcuniverse.online/wp-content/uploads/2026/03/logo-blanco-dentro-1.png"
+        alt="NFC Universe"
+        class="landing-nfu-logo">
+
+      <!-- Logo del negocio si existe -->
       <% if (business.logo_url) { %>
         <img src="<%= business.logo_url %>" alt="<%= business.name %>" class="business-logo">
       <% } else { %>
@@ -29,11 +37,18 @@
 
     <!-- ── ESTADO: Premio reclamado (se muestra tras el POST) ── -->
     <div class="card card--landing hidden" id="card-post">
+
+      <img
+        src="https://nfcuniverse.online/wp-content/uploads/2026/03/logo-blanco-dentro-1.png"
+        alt="NFC Universe"
+        class="landing-nfu-logo">
+
       <div class="emoji-big">✅</div>
       <h1 class="landing-title">¡Premio reclamado!</h1>
       <p class="landing-subtitle">Tu código de descuento:</p>
       <div class="discount-box" id="discount-code-display"></div>
       <p class="redeem-note">Preséntalo en el local para canjearlo.</p>
+
       <% if (business.logo_url) { %>
         <img src="<%= business.logo_url %>" alt="<%= business.name %>" class="business-logo business-logo--small">
       <% } %>
@@ -42,6 +57,12 @@
     <% } else { %>
     <!-- ── ESTADO: Ya reclamado (cargado desde servidor) ── -->
     <div class="card card--landing">
+
+      <img
+        src="https://nfcuniverse.online/wp-content/uploads/2026/03/logo-blanco-dentro-1.png"
+        alt="NFC Universe"
+        class="landing-nfu-logo">
+
       <div class="emoji-big">🔒</div>
       <h1 class="landing-title">Premio ya reclamado</h1>
       <p class="landing-subtitle">Este NFC GO ya fue encontrado por alguien antes que tú.</p>
@@ -56,6 +77,10 @@
     <% } %>
 
     <footer class="landing-footer">
+      <img
+        src="https://nfcuniverse.online/wp-content/uploads/2026/03/logo-blanco-dentro-1.png"
+        alt="NFC Universe"
+        class="footer-logo">
       <span class="brand">NFC GO</span>
       <span class="brand-tagline">La caza del tesoro urbana</span>
     </footer>
