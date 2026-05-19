@@ -9,7 +9,13 @@
 <body class="admin-body">
 
   <header class="admin-header">
-    <a href="/admin" class="brand">NFC GO</a>
+    <a href="/admin" class="header-brand">
+      <img
+        src="https://nfcuniverse.online/wp-content/uploads/2026/03/logo-blanco-dentro-1.png"
+        alt="NFC Universe"
+        class="header-logo">
+      <span class="header-title">NFC GO</span>
+    </a>
     <nav class="admin-nav">
       <a href="/admin" class="nav-link<% if (page==='dashboard') { %> nav-link--active<% } %>">Negocios</a>
       <a href="/admin/logout" class="nav-link nav-link--logout">Salir</a>
@@ -100,7 +106,7 @@
           <tbody>
             <% businesses.forEach(b => { %>
             <tr>
-              <td><%= b.name %></td>
+              <td><strong><%= b.name %></strong></td>
               <td><code class="code-chip"><%= b.slug %></code></td>
               <td>
                 <span class="tag-count">
@@ -117,7 +123,7 @@
                 </span>
               </td>
               <td class="td-actions">
-                <a href="/admin/businesses/<%= b.id %>" class="btn btn--sm">Ver etiquetas</a>
+                <a href="/admin/businesses/<%= b.id %>" class="btn btn--sm btn--secondary">Ver etiquetas</a>
                 <button
                   class="btn btn--sm btn--danger"
                   data-business-id="<%= b.id %>"
@@ -147,7 +153,7 @@
       </span>
       <div class="page-header-actions">
         <a href="/admin/businesses/<%= business.id %>/export.csv"
-           class="btn btn--sm">⬇ Exportar CSV</a>
+           class="btn btn--sm btn--secondary">⬇ Exportar CSV</a>
         <form method="POST"
               action="/admin/businesses/<%= business.id %>/reset-all"
               onsubmit="return confirm('¿Resetear TODAS las etiquetas de este negocio a \"disponible\"?\n\nEsto borrará las fechas de reclamación.')">
@@ -317,7 +323,7 @@
                   </form>
                 <% } else if (tag.status === 'disabled') { %>
                   <form method="POST" action="/admin/tags/<%= tag.id %>/enable" style="display:inline">
-                    <button class="btn btn--sm">Activar</button>
+                    <button class="btn btn--sm btn--secondary">Activar</button>
                   </form>
                 <% } else { %>
                   <!-- claimed -->
@@ -345,10 +351,9 @@
   <script>
     // ──────────────────────────────────────────────────────────────────────
     // Corrige las URLs NFC a absolutas usando el origen real de la página
-    // (funciona en localhost, Render, Fly.io, etc. sin depender de baseUrl)
     // ──────────────────────────────────────────────────────────────────────
     (function fixNfcUrls() {
-      const base = window.location.origin;  // ej: https://nfc-go-pilot.onrender.com
+      const base = window.location.origin;
       document.querySelectorAll('.nfc-url-code').forEach(code => {
         const tag = code.dataset.tag;
         const full = base + '/c/' + tag;
@@ -362,7 +367,7 @@
     })();
 
     // ──────────────────────────────────────────────────────────────────────
-    // Función copyUrl (por si admin.js no la define o para sobrescribir)
+    // copyUrl
     // ──────────────────────────────────────────────────────────────────────
     function copyUrl(el) {
       const url = el.dataset.url;
@@ -370,13 +375,12 @@
       navigator.clipboard.writeText(url).then(() => {
         const originalText = el.textContent;
         el.textContent = '¡Copiado!';
-        el.classList.add('btn-copied');
+        el.classList.add('btn--copied');
         setTimeout(() => {
           el.textContent = originalText;
-          el.classList.remove('btn-copied');
+          el.classList.remove('btn--copied');
         }, 1500);
       }).catch(() => {
-        // Fallback para navegadores antiguos
         const input = document.createElement('input');
         input.value = url;
         document.body.appendChild(input);
